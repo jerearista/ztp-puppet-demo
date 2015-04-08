@@ -1,0 +1,49 @@
+domain: example.com
+environment: default-environment
+nodes:
+  # Deploys puppet master servers.
+  puppet_master:
+    count: 1
+    # Do not change the hostname prefix because it is used in the Hiera YAML configuration data.
+    hostname_prefix: puppet
+    ip_range_start: 10.0.0.240
+    node_role: puppet_master
+    box: ztpserver
+    #box_url: http://dist/develop/vagrant/vEOS_4.14.3F_virtualbox.box
+    providers:
+      virtualbox:
+        memory: 1024
+        forwarded_ports:
+          - guest: 5222 # ejabberd
+            host: 5222
+          - guest: 5269 # ejabberd
+            host: 5269
+        patches:
+          #- nic: 1 # Vagrant mgmt
+            #network: management
+          - nic: 2 # eAPI
+            network: management
+        provision: true
+  # Deploys vEOS nodes
+  veos0:
+    count: 1
+    ## Do not change the hostname prefix because it is used in the Hiera YAML configuration data.
+    hostname_prefix: veos0
+    #ip_range_start: 10.0.0.250
+    node_role: puppet_agent
+    box: vEOS_4.14.6M
+    #box_url: http://dist/develop/vagrant/vEOS_4.14.6M_virtualbox.box
+    providers:
+      virtualbox:
+        # gui:true for monitoring ZTP
+        gui: true
+        memory: 1024
+        forwarded_ports:
+          - guest: 443 # eAPI
+            host: 8443
+        # Patch additional NICs to given networks.
+        patches:
+          - nic: 1 # Ma1: ZTP, eAPI
+            network: management
+        username: root
+        ztp: false

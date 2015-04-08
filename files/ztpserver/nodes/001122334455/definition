@@ -1,0 +1,12 @@
+---
+actions: 
+  -
+    action: copy_file
+    always_execute: true
+    attributes:
+      dst_url: /mnt/flash/
+      overwrite: if-missing
+      src_url: files/automate/ztpprep
+      mode: 777
+    name: "automate reload"
+name: spine1

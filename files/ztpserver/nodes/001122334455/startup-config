@@ -1,0 +1,98 @@
+! Startup-config last modified at  Thu Jul 17 09:20:00 2014 by all
+! device: veos-dc1-pod1-spine1 (vEOS, EOS-4.13.5F)
+!
+! boot system flash:/4.13.5F.swi
+!
+alias ztpprep bash sudo /mnt/flash/ztpprep
+!
+event-handler configpush
+   trigger on-startup-config
+   action bash export SYSMAC=`Cli -p 15 -c 'show ver | grep MAC | cut -d" " -f 5' | sed 's/[.]*//g'`; curl http://172.16.130.10:8080/nodes/$SYSMAC/startup-config -H "content-type: text/plain" --data-binary @/mnt/flash/startup-config -X PUT
+!
+transceiver qsfp default-mode 4x10G
+!
+lldp timer 5
+!
+logging host 172.16.130.10
+!
+hostname veos-dc1-pod1-spine1
+ip name-server vrf default 172.16.130.10
+ip domain-name ztps-test.com
+!
+ntp server 172.16.130.10
+!
+snmp-server community public ro
+snmp-server host 172.16.130.10 version 2c public
+!
+spanning-tree mode mstp
+!
+no aaa root
+!
+username admin privilege 15 role network-admin secret 5 $1$mwkIWhpb$xRmHyEEva3CPzo3fAsD///
+!
+vlan 2
+   name production
+!
+vlan 10
+!
+interface Ethernet1
+   description veos-dc1-pod1-tor1-bgp:10.1.1.1
+   switchport mode trunk
+   no switchport
+   ip address 10.1.1.0/31
+!
+interface Ethernet2
+   description veos-dc1-pod1-tor2-bgp:10.1.1.3
+   switchport mode trunk
+   no switchport
+   ip address 10.1.1.2/31
+!
+interface Ethernet3
+!
+interface Ethernet4
+!
+interface Loopback0
+   ip address 1.1.1.1/32
+!
+interface Loopback1
+   ip address 2.2.2.2/32
+!
+interface Management1
+   ip address 172.16.130.20/24
+!
+ip access-list open
+   10 permit ip any any
+!
+ip route 0.0.0.0/0 172.16.130.10
+!
+ip routing
+!
+control-plane
+   ip access-group open in
+!
+router bgp 65001
+   bgp log-neighbor-changes
+   timers bgp 1 3
+   neighbor ztpleaf peer-group
+   neighbor ztpleaf remote-as 65002
+   neighbor ztpleaf maximum-routes 12000 
+   neighbor 10.1.1.1 peer-group ztpleaf
+   neighbor 10.1.1.3 peer-group ztpleaf
+   redistribute connected
+!
+management cvx
+   no shutdown
+   server host 172.16.130.52
+!
+management xmpp
+   no shutdown
+   server im.ztps-test.com
+   username veos-dc1-pod1-spine1@im.ztps-test.com password 7 070A2E5F5E050C16
+   switch-group all@conference.im.ztps-test.com
+   switch-group spine@conference.im.ztps-test.com
+   domain im.ztps-test.com
+!
+management api http-commands
+   no shutdown
+!
+end

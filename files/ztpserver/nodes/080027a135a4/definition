@@ -1,0 +1,34 @@
+---
+name: puppet-test
+actions:
+  -
+    action: copy_file
+    always_execute: true
+    attributes:
+      dst_url: /mnt/flash/
+      overwrite: if-missing
+      src_url: files/automate/ztpprep
+      mode: 777
+    name: "automate reload"
+  -
+    action: install_extension
+    always_execute: true
+    attributes:
+      url: files/puppet/puppet-enterprise-3.7.2-eos-4-i386.swix
+    name: "Install Puppet"
+  -
+    action: install_extension
+    always_execute: true
+    attributes:
+      url: files/puppet/rbeapi-0.1.0.swix
+    name: "Install rbeapi"
+  -
+    action: add_config
+    attributes:
+      url: files/templates/puppet.template
+      #variables:
+      #  ipaddress: allocate('mgmt_subnet')
+    name: "Base config"
+    onstart: "Starting to configure EOS"
+    onsuccess: "SUCCESS: Base EOS configure"
+    onfailure: "FAIL: IM provisioning@example.com for help"

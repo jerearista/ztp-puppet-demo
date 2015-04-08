@@ -1,0 +1,4 @@
+name: static_node
+interfaces:
+  - any: any:any
+

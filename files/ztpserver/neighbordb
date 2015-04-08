@@ -1,0 +1,12 @@
+# -*- mode: yaml -*-
+# vi: set ft=yaml :
+---
+patterns:
+  - name: tora for pod1
+    definition: tora
+    interfaces:
+      - Ethernet1: veos-dc1-pod1-spine1.ztps-test.com:Ethernet1
+  - name: torb for pod1
+    definition: torb
+    interfaces:
+      - Ethernet1: veos-dc1-pod1-spine1.ztps-test.com:Ethernet2

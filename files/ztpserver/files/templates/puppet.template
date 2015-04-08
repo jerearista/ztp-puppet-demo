@@ -1,0 +1,30 @@
+!
+hostname veos01
+!
+event-handler dhclient
+   trigger on-boot
+   action bash sudo dhclient ma1 
+! 
+alias pa bash sudo puppet agent --environment production --waitforcert 30
+!
+ip domain-name ztps-test.com
+ip host ztps.ztps-test.com 172.16.130.10
+ip host puppet 172.16.130.10
+!
+aaa root secret 5 $1$jACCYmeP$aCRNwonEtPWYo.scIokoF0
+!
+username admin privilege 15 role network-admin secret admin
+!
+management api http-commands
+   no protocol https
+   protocol unix-socket
+   no shutdown
+!
+management xmpp
+   no shutdown
+   server im.ztps-test.com
+   username veos-dc1-pod1-spine1@im.ztps-test.com password 7 070A2E5F5E050C16
+   switch-group all@conference.im.ztps-test.com
+   switch-group spine@conference.im.ztps-test.com
+   domain im.ztps-test.com
+!
