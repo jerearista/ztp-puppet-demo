@@ -1,0 +1,20 @@
+#cloud-config
+groups:
+  - ztpserver
+users:
+  - name: ztpsadmin
+    ssh-authorized-keys:
+      - ssh-rsa <replace-me-with-a-valid-ssh-public-key>
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    groups: sudo, ztpserver
+    shell: /bin/bash
+  - name: admin
+    ssh-authorized-keys:
+      - ssh-rsa <replace-me-with-a-valid-ssh-public-key>
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    groups: sudo
+    shell: /bin/bash
+packages:
+  - sudo
+  - vim-puppet
+  - puppetmaster
