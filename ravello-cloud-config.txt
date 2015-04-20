@@ -16,5 +16,6 @@ users:
     shell: /bin/bash
 packages:
   - sudo
+  - git
   - vim-puppet
   - puppetmaster
