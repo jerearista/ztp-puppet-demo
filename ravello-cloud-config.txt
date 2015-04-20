@@ -17,5 +17,6 @@ users:
 packages:
   - sudo
   - git
+  - python-pip
   - vim-puppet
   - puppetmaster
