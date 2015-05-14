@@ -83,7 +83,7 @@ Vagrant.configure(2) do |config|
             ##puppet.manifests_path = "manifests"
             ##puppet.manifest_file = "default.pp"
             puppet.module_path = "modules"
-            puppet.options = "--verbose"
+            puppet.options = "--verbose --config_version='/usr/bin/git --git-dir /vagrant/.git rev-parse HEAD'"
             #puppet.options = "--verbose --debug"
           end
         end
