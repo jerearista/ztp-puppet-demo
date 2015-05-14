@@ -1,8 +1,13 @@
 class puppet_master::demo (
-  $environment = "production",
-  $revision    = "develop",
+  $environment       = 'production',
+  $environments_path = '/etc/puppet/environments',
+  $puppet_demo_revision       = 'master',
+  $eos_revision               = 'develop',
+  $netdev_stdlib_revision     = 'master',
+  $netdev_stdlib_eos_revision = 'develop',
+  $eos_config_revision        = 'master',
 ){
-  $environments = "/etc/puppet/environments"
+  $environments = '/etc/puppet/environments'
   $my_env       = "${environments}/${environment}"
   $modules      = "${my_env}/modules"
   $manifests    = "${my_env}/manifests"
@@ -20,17 +25,17 @@ class puppet_master::demo (
   #}
 
   Vcsrepo {
-    require => File["${environments}"],
+    require => File[$environments],
     owner   => vagrant,
     group   => vagrant,
   }
 
-  vcsrepo { "${my_env}":
+  vcsrepo { $my_env:
+    ensure   => present,
     provider => git,
     force    => true,  # clobber dest path if it previously existed
-    ensure   => present,
     source   => 'https://github.com/jerearista/puppet-demo-environment.git',
-    revision => master,
+    revision => $puppet_demo_revision,
   } ->
   file { '/etc/puppet/hiera.yaml':
     # Puppet 2 does not have a global hiera_config setting like puppet 3...
@@ -40,35 +45,35 @@ class puppet_master::demo (
   }
 
   vcsrepo { "${modules}/eos":
+    ensure   => present,
     provider => git,
     force    => true,  # clobber dest path if it previously existed
-    ensure   => present,
     source   => 'https://github.com/arista-eosplus/puppet-eos.git',
-    revision => $revision,
+    revision => $eos_revision,
   }
 
   vcsrepo { "${modules}/eos_config":
+    ensure   => present,
     provider => git,
     force    => true,  # clobber dest path if it previously existed
-    ensure   => present,
     source   => 'https://github.com/jerearista/puppet-eos_config-demo.git',
-    revision => master,
+    revision => $eos_config_revision,
     #revision => $revision,
   }
 
   vcsrepo { "${modules}/netdev_stdlib":
+    ensure   => present,
     provider => git,
     force    => true,  # clobber dest path if it previously existed
-    ensure   => present,
     source   => 'https://github.com/puppetlabs/netdev_stdlib.git',
-    revision => master,
+    revision => $netdev_stdlib_revision,
   }
 
   vcsrepo { "${modules}/netdev_stdlib_eos":
+    ensure   => present,
     provider => git,
     force    => true,  # clobber dest path if it previously existed
-    ensure   => present,
     source   => 'https://github.com/arista-eosplus/puppet-netdev.git',
-    revision => master,
+    revision => $netdev_stdlib_eos_revision,
   }
 }
