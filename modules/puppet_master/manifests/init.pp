@@ -27,13 +27,17 @@ file { '/etc/puppet/puppet.conf':
 }
 
 # Configure the puppet master's certificate
-augeas { "configure master cert":
+$context = "/files/etc/puppet/puppet.conf/main"
+$hostaliases = "puppet,${::fqdn},${::hostname},puppet.example.com,ztps,ztps.example.com,ztps.ztp-test.com"
+augeas { "${context}/dns_alt_names":
   require => File['/etc/puppet/puppet.conf'],
-  context => "/files/etc/puppet/puppet.conf/main",
+  context => $context,
   changes => [
     #"set certname puppetmaster",
-    "set dns_alt_names puppet,puppetmaster,puppet.example.com,ztps,ztps.example.com,ztps.ztp-test.com"
+    "set dns_alt_names $hostaliases",
   ],
+  onlyif  => "get dns_alt_names != $hostaliases",
+  #onlyif  => "/var/lib/puppet/ssl/certs/${::fqdn}.pem",
 }
 
 #service { "puppet":
@@ -85,16 +89,15 @@ file { "/etc/puppet/manifests/nodes.pp":
   target => "/vagrant/modules/puppet_master/files/nodes.pp",
   require => Package['puppet-server'],
 }
-exec { "chcon_puppet_dir2":
-  command => 'restorecon -Rv /etc/puppet',
-  require => File[ '/etc/puppet/manifests/nodes.pp' ],
-  #require => File[
-  #             '/etc/puppet/autosign.conf',
-  #             '/etc/puppet/manifests/site.pp',
-  #             '/etc/puppet/manifests/nodes.pp',
-  #           ],
-}
-
+#exec { "chcon_puppet_dir2":
+#  command => 'restorecon -Rv /etc/puppet',
+#  require => File[ '/etc/puppet/manifests/nodes.pp' ],
+#  #require => File[
+#  #             '/etc/puppet/autosign.conf',
+#  #             '/etc/puppet/manifests/site.pp',
+#  #             '/etc/puppet/manifests/nodes.pp',
+#  #           ],
+#}
 
 exec { "gen_puppet_ca_certs":
   #command => 'puppet master --verbose --no-daemonize',
@@ -103,7 +106,10 @@ exec { "gen_puppet_ca_certs":
                Package['expect'],
              ],
   #unless  => "ls /var/lib/puppet/ssl/*/puppetmaster.pem",
-  unless  => "ls /var/lib/puppet/ssl/*/$::hostname.pem",
+  #unless  => "ls /var/lib/puppet/ssl/*/${::fqdn}.pem",
+  # Doing this because in some cases FQDN may be a differenc case from the filenames.
+  # ...alt: get puppetlabs-stdlib and use downcase(${::fqdn})
+  unless  => "ls /var/lib/puppet/ssl/private_keys/*.pem",
 } ->
 service { "puppetmaster":
   ensure => running,
@@ -111,4 +117,5 @@ service { "puppetmaster":
   require => Package['puppet-server'],
   subscribe => File['/etc/puppet/puppet.conf'],
 }
+
 }
