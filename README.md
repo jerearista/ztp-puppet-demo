@@ -14,3 +14,31 @@ For the vEOS node(s), setting “ztp: true” will cause the config to be erased
 
 Network connectivity and port forwarding (for test or development work with eAPI) may also be configured in the vagrant.yaml file.
 
+## Vagrant
+
+For Vagrant use, this requires a properly built basebox (virtualbox) and has been tested with Fedora 20, initially.
+
+Simplified installation of VirtualBox Guest Additions: https://ask.fedoraproject.org/en/question/44503/fedora-20-virtualbox-guest-additions-install/
+http://rpmfusion.org/Configuration/
+
+    # For fedora 14 and higher:
+    sudo su -c ‘yum localinstall --nogpgcheck http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm’
+    sudo yum install VirtualBox-guest kmod-VirtualBox
+
+### Deploying an environment
+
+    vagrant box add Fedora-20-base
+    git clone https://github.com/jerearista/ztp-puppet-demo.git
+    cd ztp-puppet-demo
+    # edit vagrant.yaml
+        - nodes --> puppet_master --> box: & box_url:
+    vagrant up puppet1
+
+At this point, the base VM will be booted, then provisioned, via puppet, to create an Open Source Puppet master.
+
+    mkdir -p files/puppet/environments
+    git clone https://github.com/jerearista/puppet-demo-environment.git files/puppet/environments/demo
+    git clone https://github.com/jerearista/puppet-eos_config-demo.git files/puppet/environments/demo/modules/eos_config/
+
+
+
