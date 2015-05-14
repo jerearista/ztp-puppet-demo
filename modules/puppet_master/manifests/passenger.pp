@@ -15,16 +15,30 @@ $packages = [ "httpd",
             ]
 package { $packages: ensure => installed, }
 
-# Ensure SELinux is not in enforcing mode
-exec { "disable_selinux":
-  command => 'setenforce permissive',
-  onlyif  => "[ `/sbin/getenforce` == 'Enforcing' ]",
-}->
-augeas { "set selinux permissive":
-  context => "/files/etc/sysconfig/selinux",
-  changes => [
-    "set SELINUX permissive",
-  ],
+# selinux => true
+# selinux_config_mode => permissive
+# selinux_config_policy => targeted
+# selinux_current_mode => permissive
+# selinux_enforced => false
+
+# Req: stdlib
+#if str2bool("$selinux") {
+if $selinux == "true" {
+  if "$::selinux_current_mode" != "permissive" {
+    # Ensure SELinux is not in enforcing mode
+    exec { "disable_selinux":
+      command => 'setenforce permissive',
+      #onlyif  => "[ `/sbin/getenforce` == 'Enforcing' ]",
+    }
+  }
+  if "$::selinux_config_mode" != "permissive" {
+    augeas { "set selinux permissive":
+      context => "/files/etc/sysconfig/selinux",
+      changes => [
+        "set SELINUX permissive",
+      ],
+    }
+  }
 }
 
 
