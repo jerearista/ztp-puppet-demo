@@ -1,0 +1,3 @@
+# Don't add rpm and swix files in to the repo
+*.rpm
+*.swix
