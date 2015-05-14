@@ -23,8 +23,12 @@ module Vagrant_config
       num_servers = opts['count']
       for i in 1..num_servers
         hostname = '%s%s' % [ opts['hostname_prefix'], i.to_s]
-        #nodes[hostname] = { 'ip' => gen_ip(opts['ip_range_start'], i), 'node_role' => opts['node_role'] }
-        nodes[hostname] = { 'box' => opts['box'], 'box_url' => opts['box_url'], 'node_role' => opts['node_role'] }
+        nodes[hostname] = {
+            'ip' => gen_ip(opts['ip_range_start'], i),
+            'box' => opts['box'],
+            'box_url' => opts['box_url'],
+            'node_role' => opts['node_role']
+        }
         opts['providers'].each do |provider, provider_opts|
           nodes[hostname][provider] = provider_opts
         end

@@ -31,7 +31,6 @@ Vagrant.configure(2) do |config|
   #
   nodes.each_pair do |node_name,node_opts|
     config.vm.define node_name do |c|
-      #c.vm.hostname = node_name.to_s
       # Every Vagrant development environment requires a box. You can search for
       # boxes at https://atlas.hashicorp.com/search.
       c.vm.box = node_opts[:box]
@@ -40,9 +39,13 @@ Vagrant.configure(2) do |config|
       end
       #c.vm.network :private_network, ip: node_opts[:ip]
       #c.vm.network :private_network, type: "dhcp"
-      #c.vm.synced_folder "./", "/vagrant", disabled: true
-      c.vm.synced_folder "./", "/vagrant"
-      #c.vm.synced_folder "./", "/vagrant", type: "nfs"
+      if node_opts[:virtualbox][:shared_folders]
+        #c.vm.synced_folder "./", "/vagrant", disabled: true
+        c.vm.synced_folder "./", "/vagrant"
+        #c.vm.synced_folder "./", "/vagrant", type: "nfs"
+      else
+        c.vm.synced_folder "./", "/vagrant", disabled: true
+      end
 
       c.vm.provider "virtualbox" do |v|
 
@@ -59,6 +62,14 @@ Vagrant.configure(2) do |config|
         #v.name = node_name
 
         if node_opts[:virtualbox][:username]
+          memory = node_opts[:virtualbox][:memory]
+          v.customize [
+               "modifyvm", :id,
+               "--memory", "#{memory}",
+            ]
+        end
+
+        if node_opts[:virtualbox][:username]
           c.ssh.username = node_opts[:virtualbox][:username]
         end
 
@@ -72,30 +83,66 @@ Vagrant.configure(2) do |config|
             ##puppet.manifests_path = "manifests"
             ##puppet.manifest_file = "default.pp"
             puppet.module_path = "modules"
-            puppet.options = "--verbose"
+            puppet.options = "--verbose --config_version='/usr/bin/git --git-dir /vagrant/.git rev-parse HEAD'"
             #puppet.options = "--verbose --debug"
           end
-          #c.provision "shell", inline: <<-SHELL
-          #SHELL
         end
-        if node_opts[:virtualbox][:ztp]
-          c.vm.provision "shell", inline: <<-SHELL
-            FastCli -p 15 -c "write erase
-
-            reload
-            no
-
-          SHELL
+        #c.provision "shell", inline: <<-SHELL
+        #SHELL
+        if node_name.to_s.include? "veos"
+          # Only do these parts for veos nodes
+          if node_opts[:virtualbox][:ztp]
+            c.vm.provision "shell", inline: <<-SHELL
+              FastCli -p 15 -c "write erase
+             reload
+              no
+              "
+            SHELL
+          else
+            c.vm.provision "file", source: "files/eapi.conf", destination: "/mnt/flash/eapi.conf"
+            c.vm.provision "file", source: "files/dhclient.conf", destination: "/mnt/flash/dhclient.conf"
+            c.vm.provision "file", source: "files/extensions/rbeapi-0.1.0.swix", destination: "/mnt/flash/rbeapi-0.1.0.swix"
+            c.vm.provision "file", source: "files/extensions/puppet-enterprise-3.7.2-eos-4-i386.swix", destination: "/mnt/flash/puppet-enterprise-3.7.2-eos-4-i386.swix"
+            c.vm.provision "shell", inline: <<-SHELL
+              FastCli -p 15 -c "configure
+              hostname #{node_name.to_s}
+              ip domain-name example.com
+              ip host ztps.example.com 172.16.130.11
+              ip host puppet 172.16.130.11
+              interface Ethernet1
+                 no switchport
+                 ip address #{node_opts[:ip]}/24
+                 no shutdown
+              alias pa bash sudo puppet agent
+              alias puppet bash sudo puppet
+              username admin privilege 15 role network-admin secret admin
+              interface Management1
+                 description Provisioned by Vagrant
+              management api http-commands
+              protocol unix-socket
+              end
+              copy running-config startup-config
+              copy flash:puppet-enterprise-3.7.2-eos-4-i386.swix extension:
+              copy flash:rbeapi-0.1.0.swix extension:
+              delete flash:puppet-enterprise-3.7.2-eos-4-i386.swix
+              delete flash:rbeapi-0.1.0.swix
+              extension puppet-enterprise-3.7.2-eos-4-i386.swix
+              extension rbeapi-0.1.0.swix
+              copy installed-extensions boot-extensions"
+            SHELL
+            #c.vm.provision "shell", inline: <<-SHELL
+            #  FastCli -p 15 -c "configure
+            #  management api http-commands
+            #     no protocol https
+            #     protocol http
+            #     no shutdown
+            #  end
+            #  copy running-config startup-config"
+            #SHELL
+          end
         else
-          #c.provision "shell", inline: <<-SHELL
-          #  FastCli -p 15 -c "configure
-          #  management api http-commands
-          #     no protocol https
-          #     protocol http
-          #     no shutdown
-          #  end
-          #  copy running-config startup-config"
-          #SHELL
+          c.vm.hostname = node_name.to_s
+          c.vm.network :private_network, ip: node_opts[:ip]
         end
 
         if node_opts[:virtualbox][:forwarded_ports]
